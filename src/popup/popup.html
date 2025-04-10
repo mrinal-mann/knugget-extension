@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Knugget AI</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Knugget AI</h1>
+      <p>AI-powered content summarization</p>
+    </div>
+    
+    <div class="content">
+      <div id="login-section">
+        <p>Please log in to access all features</p>
+        <button id="login-button" class="btn primary">Log In</button>
+      </div>
+      
+      <div id="user-section" style="display: none;">
+        <p>Welcome back, <span id="username">User</span>!</p>
+        <div class="stats">
+          <div class="stat-item">
+            <span class="stat-value" id="summaries-count">0</span>
+            <span class="stat-label">Summaries</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value" id="credits-count">0</span>
+            <span class="stat-label">Credits</span>
+          </div>
+        </div>
+        <button id="dashboard-button" class="btn secondary">Open Dashboard</button>
+        <button id="logout-button" class="btn danger">Log Out</button>
+      </div>
+    </div>
+    
+    <div class="footer">
+      <p>Made with ❤️ by Knugget</p>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

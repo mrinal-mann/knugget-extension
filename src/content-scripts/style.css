@@ -1,0 +1,262 @@
+.knugget-extension {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+  margin-bottom: 16px;
+}
+
+.knugget-summary-widget {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+#knugget-container button {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+#knugget-container button:hover {
+  opacity: 0.9;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .knugget-extension .bg-white {
+    background-color: #0f0f0f;
+    color: #fff;
+  }
+
+  .knugget-extension .border-gray-300 {
+    border-color: #3f3f3f;
+  }
+
+  .knugget-extension .text-gray-600 {
+    color: #aaa;
+  }
+}
+
+/* Transcript and summary tabs */
+.knugget-tab,
+#transcript-tab,
+#summary-tab {
+  padding: 8px 12px;
+  cursor: pointer;
+  background-color: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+#transcript-tab.active,
+#summary-tab.active,
+#transcript-tab,
+#summary-tab {
+  border-bottom: 2px solid transparent;
+}
+
+#transcript-tab.active,
+#summary-tab.active,
+#transcript-tab.border-\[#8950FC\],
+#summary-tab.border-\[#8950FC\] {
+  border-bottom-color: #8950fc;
+  color: #8950fc;
+}
+
+/* Content sections */
+#transcript-content,
+#summary-content {
+  padding: 12px 0;
+  max-height: calc(100vh - 250px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  background-color: #fff;
+}
+
+/* Custom scrollbar for webkit browsers */
+#transcript-content::-webkit-scrollbar,
+#summary-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+#transcript-content::-webkit-scrollbar-track,
+#summary-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+#transcript-content::-webkit-scrollbar-thumb,
+#summary-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+}
+
+/* Transcript segments */
+.transcript-segment {
+  margin-bottom: 18px;
+  padding-bottom: 4px;
+}
+
+.transcript-segment span {
+  color: #8950fc;
+  font-weight: 600;
+  font-size: 12px;
+  margin-right: 8px;
+  display: inline-block;
+  min-width: 40px;
+}
+
+.transcript-segment p {
+  line-height: 1.5;
+  font-size: 14px;
+  color: #333;
+  margin: 0;
+}
+
+/* Dark mode for transcript text */
+@media (prefers-color-scheme: dark) {
+  .knugget-transcript-text,
+  .transcript-segment p {
+    color: #ddd;
+  }
+}
+
+.knugget-summary-content {
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+/* Loading spinner */
+.knugget-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100px;
+}
+
+.knugget-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top-color: #7c4dff;
+  animation: knugget-spin 1s ease-in-out infinite;
+}
+
+@keyframes knugget-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Language selector */
+.knugget-language-selector,
+button.bg-black.text-white {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background-color: #000;
+  color: white;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Review banner */
+.bg-blue-50 {
+  background-color: #f0f5ff;
+  padding: 8px 16px;
+  border-bottom: 1px solid #e6efff;
+}
+
+.bg-blue-50 a {
+  color: #3b82f6;
+  text-decoration: none;
+}
+
+.bg-blue-50 a:hover {
+  text-decoration: underline;
+}
+
+/* Dark mode overrides specific to the components in the screenshot */
+@media (prefers-color-scheme: dark) {
+  .knugget-review-banner {
+    background-color: #242424;
+    border-color: #424242;
+  }
+
+  .knugget-review-banner a {
+    color: #818cf8;
+  }
+
+  .transcript-segment p {
+    color: #e0e0e0;
+  }
+}
+
+/* Login button */
+#knugget-login-btn {
+  background-color: #8950fc;
+  color: white;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  transition: background-color 0.2s;
+}
+
+#knugget-login-btn:hover {
+  background-color: #7940e7;
+}
+
+/* Footer */
+.knugget-box .text-center.text-xs {
+  padding: 8px 0;
+  color: #9ca3af;
+  background-color: #fff;
+  border-top: 1px solid #f3f4f6;
+}
+
+/* Base styles for the theme */
+.knugget-box {
+  background-color: #fff;
+  border-radius: 12px;
+  border: 1px solid #f0f0f0;
+  overflow: hidden;
+}
+
+.knugget-box .border-b {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.knugget-box .text-gray-900 {
+  color: #111827;
+}
+
+.knugget-box .text-gray-500 {
+  color: #6b7280;
+}
+
+.knugget-box .text-gray-400 {
+  color: #9ca3af;
+}
+
+.knugget-box .text-blue-800 {
+  color: #1e40af;
+}
+
+.knugget-box .text-blue-600 {
+  color: #2563eb;
+}
+
+.knugget-box .px-3 {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.knugget-box .py-3 {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
