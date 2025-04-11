@@ -30,7 +30,7 @@ let transcriptData: TranscriptSegment[] | null = null;
 let summaryData: Summary | null = null;
 
 // Base URL for the Knugget API - Update this to point to your backend
-const API_BASE_URL = "http://localhost:3000/api"; // Changed to include /api path
+const API_BASE_URL = "http://localhost:3000/api"; // Updated to production URL
 
 // API endpoints - Make sure these match your backend routes
 const ENDPOINTS = {
@@ -403,34 +403,40 @@ function showError(
 }
 
 // Function to show login required state for summary tab
-// Function to show login required state for summary tab
 function showLoginRequired(summaryContentElement: HTMLElement): void {
   summaryContentElement.innerHTML = `
-    <div class="flex flex-col items-center justify-center p-6 text-center">
-      <div class="mb-4 text-teal-400">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
-          <path d="M8 12H16M12 8V16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
-      </div>
-      <p class="text-base font-medium text-gray-200 mb-1">Log in Required</p>
-      <p class="text-sm text-gray-400 mb-4">Please log in to access the summary feature.</p>
-      <button id="knugget-login-btn" class="bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium px-5 py-2 rounded-md inline-flex items-center">
-        <svg class="mr-2" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12Z" stroke="white" stroke-width="2"/>
-          <path d="M12 8V16M8 12H16" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Log in Now
+    <div class="p-4 bg-gray-800 rounded-lg text-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-yellow-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m0 0v2m0-2h2m-2 0H8m10-6a6 6 0 01-6 6 6 6 0 01-6-6 6 6 0 016-6 6 6 0 016 6z" />
+      </svg>
+      <h3 class="text-lg font-semibold text-white mb-2">Login Required</h3>
+      <p class="text-gray-300 mb-4">Please log in to generate and view summaries</p>
+      <button id="knugget-login-btn" class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md transition-colors">
+        Login to Knugget
+      </button>
+      <button id="knugget-signup-btn" class="ml-2 bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-md transition-colors">
+        Create Account
       </button>
     </div>
   `;
 
-  // Add login button event listener
-  const loginButton = document.getElementById("knugget-login-btn");
-  if (loginButton) {
-    loginButton.addEventListener("click", () => {
-      // Open login page or show login modal
+  // Add event listeners to login and signup buttons
+  const loginBtn = document.getElementById("knugget-login-btn");
+  const signupBtn = document.getElementById("knugget-signup-btn");
+
+  if (loginBtn) {
+    loginBtn.addEventListener("click", () => {
       chrome.runtime.sendMessage({ type: "OPEN_LOGIN_PAGE" });
+    });
+  }
+
+  if (signupBtn) {
+    signupBtn.addEventListener("click", () => {
+      // Pass the current URL to the background script so it can be included in registration flow
+      chrome.runtime.sendMessage({
+        type: "OPEN_SIGNUP_PAGE",
+        payload: { url: window.location.href },
+      });
     });
   }
 }
@@ -443,42 +449,133 @@ function displaySummary(
   // Create HTML for key points
   const keyPointsHTML = summary.keyPoints
     .map(
-      (point) => `<li class="mb-2 flex items-start">
+      (point) => `<li class="mb-3 flex items-start">
                      <span class="inline-block mr-2 text-teal-400">•</span>
                      <span>${point}</span>
                    </li>`
     )
     .join("");
 
+  // Get video ID for generating the share URL
+  const videoId = new URLSearchParams(window.location.search).get("v") || "";
+  const shareUrl = `https://your-production-frontend.com/summary/${videoId}?ref=ext`;
+
   summaryContentElement.innerHTML = `
     <div class="p-4">
-      <h3 class="text-lg font-medium text-gray-200 mb-3">${
+      <h3 class="text-xl font-medium text-white mb-3">${
         summary.title || "Summary"
       }</h3>
       
-      <div class="mb-4">
-        <h4 class="text-md font-medium text-gray-300 mb-2">Key Points</h4>
+      <div class="mb-5 bg-gray-800 p-3 rounded-lg">
+        <h4 class="text-md font-medium text-teal-400 mb-2">Key Points</h4>
         <ul class="list-none pl-1 text-gray-200">
           ${keyPointsHTML}
         </ul>
       </div>
       
-      <div>
-        <h4 class="text-md font-medium text-gray-300 mb-2">Summary</h4>
-        <p class="text-gray-200 whitespace-pre-wrap">${summary.fullSummary}</p>
+      <div class="bg-gray-800 p-3 rounded-lg">
+        <h4 class="text-md font-medium text-teal-400 mb-2">Full Summary</h4>
+        <p class="text-gray-200 whitespace-pre-wrap leading-relaxed">${
+          summary.fullSummary
+        }</p>
       </div>
 
-      <div class="mt-4 flex justify-end">
-        <button id="save-summary-btn" class="bg-teal-600 hover:bg-teal-700 text-white text-xs font-medium px-3 py-1 rounded-md inline-flex items-center">
-          <svg class="mr-1" width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M4 18.8V5.2C4 4.0799 4 3.51984 4.21799 3.09202C4.40973 2.71569 4.71569 2.40973 5.09202 2.21799C5.51984 2 6.0799 2 7.2 2H16.8C17.9201 2 18.4802 2 18.908 2.21799C19.2843 2.40973 19.5903 2.71569 19.782 3.09202C20 3.51984 20 4.0799 20 5.2V18.8C20 19.9201 20 20.4802 19.782 20.908C19.5903 21.2843 19.2843 21.5903 18.908 21.782C18.4802 22 17.9201 22 16.8 22H7.2C6.0799 22 5.51984 22 5.09202 21.782C4.71569 21.5903 4.40973 21.2843 4.21799 20.908C4 20.4802 4 19.9201 4 18.8Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M8 2V7.2C8 7.48132 8 7.62196 8.01636 7.73828C8.08962 8.23314 8.46686 8.61038 8.96172 8.68364C9.07804 8.7 9.21869 8.7 9.5 8.7H14.5C14.7814 8.7 14.922 8.7 15.0383 8.68364C15.5332 8.61038 15.9103 8.23314 15.9836 7.73828C16 7.62196 16 7.48132 16 7.2V2" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <div class="mt-5 flex justify-between">
+        <div class="flex gap-2">
+          <button id="copy-summary-btn" class="bg-gray-700 hover:bg-gray-600 text-white text-xs font-medium px-3 py-1.5 rounded-md inline-flex items-center transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="mr-1" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+              <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+            </svg>
+            Copy
+          </button>
+          <button id="share-summary-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-3 py-1.5 rounded-md inline-flex items-center transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="mr-1" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+              <polyline points="16 6 12 2 8 6"></polyline>
+              <line x1="12" y1="2" x2="12" y2="15"></line>
+            </svg>
+            Share
+          </button>
+        </div>
+        <button id="save-summary-btn" class="bg-teal-600 hover:bg-teal-700 text-white text-xs font-medium px-3 py-1.5 rounded-md inline-flex items-center transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="mr-1" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+            <polyline points="7 3 7 8 15 8"></polyline>
           </svg>
           Save Summary
         </button>
       </div>
     </div>
   `;
+
+  // Add copy button event listener
+  const copyButton = document.getElementById("copy-summary-btn");
+  if (copyButton) {
+    copyButton.addEventListener("click", () => {
+      try {
+        // Create text to copy
+        const textToCopy = `${summary.title}\n\nKEY POINTS:\n${summary.keyPoints
+          .map((point) => `• ${point}`)
+          .join("\n")}\n\nSUMMARY:\n${
+          summary.fullSummary
+        }\n\nGenerated by Knugget AI`;
+
+        // Copy to clipboard
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          copyButton.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" class="mr-1" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 6L9 17l-5-5"></path>
+            </svg>
+            Copied!
+          `;
+
+          setTimeout(() => {
+            copyButton.innerHTML = `
+              <svg xmlns="http://www.w3.org/2000/svg" class="mr-1" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+              </svg>
+              Copy
+            `;
+          }, 2000);
+        });
+      } catch (error) {
+        console.error("Copy to clipboard failed:", error);
+      }
+    });
+  }
+
+  // Add share button event listener
+  const shareButton = document.getElementById("share-summary-btn");
+  if (shareButton) {
+    shareButton.addEventListener("click", () => {
+      try {
+        navigator.clipboard.writeText(shareUrl).then(() => {
+          shareButton.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" class="mr-1" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 6L9 17l-5-5"></path>
+            </svg>
+            Link Copied!
+          `;
+
+          setTimeout(() => {
+            shareButton.innerHTML = `
+              <svg xmlns="http://www.w3.org/2000/svg" class="mr-1" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                <polyline points="16 6 12 2 8 6"></polyline>
+                <line x1="12" y1="2" x2="12" y2="15"></line>
+              </svg>
+              Share
+            `;
+          }, 2000);
+        });
+      } catch (error) {
+        console.error("Copy share link failed:", error);
+      }
+    });
+  }
 
   // Add save button event listener
   const saveButton = document.getElementById("save-summary-btn");
@@ -494,25 +591,67 @@ function displaySummary(
           Saving...
         `;
 
-        // Call API to save summary
-        const response = await apiRequest(
-          ENDPOINTS.SAVE_SUMMARY,
-          "POST",
-          summary
-        );
+        // Get video metadata
+        const videoId =
+          new URLSearchParams(window.location.search).get("v") || "";
+        const videoUrl = window.location.href;
 
-        if (response.success) {
+        // Prepare summary for saving
+        const summaryToSave = {
+          ...summary,
+          videoId,
+          sourceUrl: videoUrl,
+          source: "youtube",
+        };
+
+        // Call API to save summary
+        const response = await saveSummary(summaryToSave);
+
+        if (response) {
           saveButton.innerHTML = `
-            <svg class="mr-1" width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <svg xmlns="http://www.w3.org/2000/svg" class="mr-1" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 6L9 17l-5-5"></path>
             </svg>
-            Saved
+            Saved!
           `;
+
+          // Add view button after saving
+          const buttonsContainer = saveButton.parentElement;
+          if (buttonsContainer) {
+            const viewButton = document.createElement("button");
+            viewButton.id = "view-saved-summaries-btn";
+            viewButton.className =
+              "ml-2 bg-gray-700 hover:bg-gray-600 text-white text-xs font-medium px-3 py-1.5 rounded-md inline-flex items-center transition-colors";
+            viewButton.innerHTML = `
+              <svg xmlns="http://www.w3.org/2000/svg" class="mr-1" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+              View All
+            `;
+
+            // Add click handler to view saved summaries
+            viewButton.addEventListener("click", () => {
+              chrome.runtime.sendMessage({
+                type: "OPEN_SAVED_SUMMARIES_PAGE",
+              });
+            });
+
+            // Insert before the save button
+            buttonsContainer.insertBefore(viewButton, saveButton);
+
+            // Hide the save button
+            saveButton.style.display = "none";
+          }
         } else {
           saveButton.innerHTML = `
-            <svg class="mr-1" width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 18.8V5.2C4 4.0799 4 3.51984 4.21799 3.09202C4.40973 2.71569 4.71569 2.40973 5.09202 2.21799C5.51984 2 6.0799 2 7.2 2H16.8C17.9201 2 18.4802 2 18.908 2.21799C19.2843 2.40973 19.5903 2.71569 19.782 3.09202C20 3.51984 20 4.0799 20 5.2V18.8C20 19.9201 20 20.4802 19.782 20.908C19.5903 21.2843 19.2843 21.5903 18.908 21.782C18.4802 22 17.9201 22 16.8 22H7.2C6.0799 22 5.51984 22 5.09202 21.782C4.71569 21.5903 4.40973 21.2843 4.21799 20.908C4 20.4802 4 19.9201 4 18.8Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M8 2V7.2C8 7.48132 8 7.62196 8.01636 7.73828C8.08962 8.23314 8.46686 8.61038 8.96172 8.68364C9.07804 8.7 9.21869 8.7 9.5 8.7H14.5C14.7814 8.7 14.922 8.7 15.0383 8.68364C15.5332 8.61038 15.9103 8.23314 15.9836 7.73828C16 7.62196 16 7.48132 16 7.2V2" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <svg xmlns="http://www.w3.org/2000/svg" class="mr-1" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+              <polyline points="17 21 17 13 7 13 7 21"></polyline>
+              <polyline points="7 3 7 8 15 8"></polyline>
             </svg>
             Save Summary
           `;
@@ -522,7 +661,7 @@ function displaySummary(
           const notification = document.createElement("div");
           notification.className =
             "fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded shadow-lg z-50";
-          notification.textContent = response.error || "Failed to save summary";
+          notification.textContent = "Failed to save summary";
           document.body.appendChild(notification);
 
           setTimeout(() => {
@@ -533,9 +672,10 @@ function displaySummary(
         console.error("Error saving summary:", error);
         (saveButton as HTMLButtonElement).disabled = false;
         saveButton.innerHTML = `
-          <svg class="mr-1" width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M4 18.8V5.2C4 4.0799 4 3.51984 4.21799 3.09202C4.40973 2.71569 4.71569 2.40973 5.09202 2.21799C5.51984 2 6.0799 2 7.2 2H16.8C17.9201 2 18.4802 2 18.908 2.21799C19.2843 2.40973 19.5903 2.71569 19.782 3.09202C20 3.51984 20 4.0799 20 5.2V18.8C20 19.9201 20 20.4802 19.782 20.908C19.5903 21.2843 19.2843 21.5903 18.908 21.782C18.4802 22 17.9201 22 16.8 22H7.2C6.0799 22 5.51984 22 5.09202 21.782C4.71569 21.5903 4.40973 21.2843 4.21799 20.908C4 20.4802 4 19.9201 4 18.8Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M8 2V7.2C8 7.48132 8 7.62196 8.01636 7.73828C8.08962 8.23314 8.46686 8.61038 8.96172 8.68364C9.07804 8.7 9.21869 8.7 9.5 8.7H14.5C14.7814 8.7 14.922 8.7 15.0383 8.68364C15.5332 8.61038 15.9103 8.23314 15.9836 7.73828C16 7.62196 16 7.48132 16 7.2V2" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <svg xmlns="http://www.w3.org/2000/svg" class="mr-1" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+            <polyline points="7 3 7 8 15 8"></polyline>
           </svg>
           Save Summary
         `;
@@ -587,6 +727,7 @@ async function loadAndDisplayTranscript(): Promise<void> {
     showError(transcriptContentElement, errorMessage, loadAndDisplayTranscript);
   }
 }
+
 // Function to load and display summary
 async function loadAndDisplaySummary(): Promise<void> {
   console.log("Knugget AI: Loading and displaying summary");
@@ -608,11 +749,22 @@ async function loadAndDisplaySummary(): Promise<void> {
     // Check if we have transcript data
     if (!transcriptData) {
       // Try to load transcript first
-      await loadAndDisplayTranscript();
+      const transcriptResponse = await extractTranscript();
 
-      // Check again if we have transcript data
-      if (!transcriptData) {
-        throw new Error("No transcript data available for summarization");
+      if (!transcriptResponse.success || !transcriptResponse.data) {
+        throw new Error(
+          transcriptResponse.error || "Could not extract video transcript"
+        );
+      }
+
+      transcriptData = transcriptResponse.data;
+
+      // Update transcript panel if it exists
+      const transcriptContentElement =
+        document.getElementById("transcript-content");
+      if (transcriptContentElement) {
+        transcriptContentElement.innerHTML =
+          createTranscriptSegmentHTML(transcriptData);
       }
     }
 
@@ -628,19 +780,39 @@ async function loadAndDisplaySummary(): Promise<void> {
     const videoTitle =
       document.querySelector("h1.title")?.textContent?.trim() || "";
 
-    // Format transcript for API
-    const transcriptText = transcriptData
-      .map((segment) => segment.text)
-      .join(" ");
+    // Get channel name if available
+    const channelElement = document.querySelector(
+      "#top-row .ytd-channel-name a"
+    );
+    const channelName = channelElement?.textContent?.trim() || "";
 
-    // Call the summarize API with the format your backend expects
+    // Get video duration if available
+    const durationElement = document.querySelector(".ytp-time-duration");
+    const duration = durationElement?.textContent || "";
+
+    // Call the summarize API with complete metadata
     const response = await apiRequest<Summary>(ENDPOINTS.SUMMARIZE, "POST", {
-      videoUrl,
-      transcript: transcriptText,
-      title: videoTitle,
+      transcript: transcriptData,
+      metadata: {
+        videoId,
+        title: videoTitle,
+        url: videoUrl,
+        duration,
+        channelName,
+      },
     });
 
     if (!response.success || !response.data) {
+      // Check if this is a credits-related error
+      if (
+        response.error?.toLowerCase().includes("credit") ||
+        response.error?.toLowerCase().includes("insufficient")
+      ) {
+        throw new Error(
+          "You have no credits remaining. Please purchase more credits to generate summaries."
+        );
+      }
+
       throw new Error(response.error || "Failed to generate summary");
     }
 

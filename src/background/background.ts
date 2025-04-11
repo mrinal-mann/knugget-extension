@@ -7,8 +7,7 @@
 // import { UserInfo } from './api';
 
 // Base URL for the Knugget website/app
-const WEBSITE_BASE_URL = "http://localhost:3000";
-
+const WEBSITE_BASE_URL = "http://localhost:8000";
 
 // Record of open tabs that have the Knugget extension active
 const activeTabsMap: Record<number, boolean> = {};
@@ -96,7 +95,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     case "OPEN_LOGIN_PAGE":
       // Open login page in a new tab
-      chrome.tabs.create({ url: `${WEBSITE_BASE_URL}/login?source=extension` });
+      chrome.tabs.create({
+        url: `${WEBSITE_BASE_URL}/auth/login?source=extension`,
+      });
+      break;
+
+    case "OPEN_SIGNUP_PAGE":
+      // Open signup page in a new tab
+      chrome.tabs.create({
+        url: `${WEBSITE_BASE_URL}/auth/register?source=extension&referrer=${encodeURIComponent(
+          message.payload?.url || ""
+        )}`,
+      });
+      break;
+
+    case "OPEN_SAVED_SUMMARIES_PAGE":
+      // Open saved summaries page in a new tab
+      chrome.tabs.create({
+        url: `${WEBSITE_BASE_URL}/summaries?source=extension`,
+      });
       break;
 
     case "OPEN_SETTINGS":

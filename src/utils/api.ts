@@ -5,15 +5,15 @@
 
 // src/utils/api.ts - Config section
 // Base URL for the Knugget API - Update this to point to your backend
-const API_BASE_URL = 'http://localhost:3000/api'; // Changed to include /api path
+const API_BASE_URL = "http://localhost:3000/api"; // Update this with your actual server URL
 
 // API endpoints - Make sure these match your backend routes
 const ENDPOINTS = {
-  LOGIN: '/auth/login', 
-  REGISTER: '/auth/register',
-  REFRESH_TOKEN: '/auth/refresh',
-  USER_PROFILE: '/auth/me', // Changed to match your route
-  SUMMARIZE: '/summary/generate',
+  LOGIN: "/auth/login",
+  REGISTER: "/auth/register",
+  REFRESH_TOKEN: "/auth/refresh",
+  USER_PROFILE: "/auth/me", // Changed to match your route
+  SUMMARIZE: "/summary/generate",
   SAVED_SUMMARIES: "/summary",
   SAVE_SUMMARY: "/summary/save",
 };
@@ -23,10 +23,12 @@ const ENDPOINTS = {
  * @param summaryId ID of the summary to delete
  * @returns Promise resolving to API response indicating success
  */
-export async function deleteSummary(summaryId: string): Promise<ApiResponse<{ success: boolean }>> {
+export async function deleteSummary(
+  summaryId: string
+): Promise<ApiResponse<{ success: boolean }>> {
   return apiRequest<{ success: boolean }>(
     `${ENDPOINTS.SAVED_SUMMARIES}/${summaryId}`,
-    'DELETE'
+    "DELETE"
   );
 }
 
@@ -35,10 +37,10 @@ export async function deleteSummary(summaryId: string): Promise<ApiResponse<{ su
  * @param summaryId ID of the summary to retrieve
  * @returns Promise resolving to API response with summary
  */
-export async function getSummaryById(summaryId: string): Promise<ApiResponse<Summary>> {
-  return apiRequest<Summary>(
-    `${ENDPOINTS.SAVED_SUMMARIES}/${summaryId}`
-  );
+export async function getSummaryById(
+  summaryId: string
+): Promise<ApiResponse<Summary>> {
+  return apiRequest<Summary>(`${ENDPOINTS.SAVED_SUMMARIES}/${summaryId}`);
 }
 
 /**
@@ -49,18 +51,18 @@ export async function getSummaryById(summaryId: string): Promise<ApiResponse<Sum
 export function getUserFriendlyError(error: string): string {
   // Map of API error messages to user-friendly messages
   const errorMap: Record<string, string> = {
-    'Authentication required': 'Please log in to continue',
-    'Invalid credentials': 'Incorrect email or password',
-    'Email already exists': 'An account with this email already exists',
-    'Invalid token': 'Your session has expired. Please log in again',
-    'Rate limit exceeded': 'You\'ve reached the request limit. Please try again later',
-    'Failed to generate summary': 'Unable to generate summary. The video might be too long or content unclear'
+    "Authentication required": "Please log in to continue",
+    "Invalid credentials": "Incorrect email or password",
+    "Email already exists": "An account with this email already exists",
+    "Invalid token": "Your session has expired. Please log in again",
+    "Rate limit exceeded":
+      "You've reached the request limit. Please try again later",
+    "Failed to generate summary":
+      "Unable to generate summary. The video might be too long or content unclear",
   };
-  
-  return errorMap[error] || error || 'An unknown error occurred';
-}
-;
 
+  return errorMap[error] || error || "An unknown error occurred";
+}
 // User information type
 export interface UserInfo {
   id: string;
@@ -104,15 +106,15 @@ export interface TranscriptSegment {
  */
 export async function getAuthToken(): Promise<string | null> {
   return new Promise((resolve) => {
-    chrome.storage.local.get(['knuggetUserInfo'], (result) => {
+    chrome.storage.local.get(["knuggetUserInfo"], (result) => {
       if (result.knuggetUserInfo) {
         const userInfo = result.knuggetUserInfo as UserInfo;
-        
+
         // Check if token is expired (with 5-minute buffer)
         if (userInfo.expiresAt < Date.now() + 300000) {
           // Try to refresh token if it's expired or about to expire
           refreshToken(userInfo.token)
-            .then(response => {
+            .then((response) => {
               if (response.success && response.data) {
                 resolve(response.data.token);
               } else {
@@ -150,78 +152,86 @@ export async function isUserLoggedIn(): Promise<boolean> {
  */
 export async function apiRequest<T>(
   endpoint: string,
-  method: string = 'GET',
+  method: string = "GET",
   data?: any,
   requiresAuth: boolean = true,
   retryCount: number = 1
 ): Promise<ApiResponse<T>> {
   try {
     const headers: HeadersInit = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     };
-    
+
     // Add auth token if required
     if (requiresAuth) {
       const token = await getAuthToken();
       if (!token) {
         return {
           success: false,
-          error: 'Authentication required',
-          status: 401
+          error: "Authentication required",
+          status: 401,
         };
       }
-      headers['Authorization'] = `Bearer ${token}`;
+      headers["Authorization"] = `Bearer ${token}`;
     }
-    
+
     // Make the request
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method,
       headers,
-      body: data ? JSON.stringify(data) : undefined
+      body: data ? JSON.stringify(data) : undefined,
     });
-    
+
     // Handle network errors
     if (!response.ok) {
       // Check for token expiration (401)
       if (response.status === 401 && requiresAuth && retryCount > 0) {
         // Try to refresh token and retry
         const refreshedToken = await refreshAndGetToken();
-        
+
         if (refreshedToken) {
           // Retry with new token
-          return apiRequest<T>(endpoint, method, data, requiresAuth, retryCount - 1);
+          return apiRequest<T>(
+            endpoint,
+            method,
+            data,
+            requiresAuth,
+            retryCount - 1
+          );
         }
       }
-      
+
       // Get error from response if possible
       let errorMessage: string;
       try {
         const errorResponse = await response.json();
-        errorMessage = errorResponse.error || `Request failed with status ${response.status}`;
+        errorMessage =
+          errorResponse.error ||
+          `Request failed with status ${response.status}`;
       } catch (jsonError) {
         errorMessage = `Request failed with status ${response.status}`;
       }
-      
+
       return {
         success: false,
         error: errorMessage,
-        status: response.status
+        status: response.status,
       };
     }
-    
+
     // Parse the JSON response
     const result = await response.json();
-    
+
     return {
       success: true,
       data: result,
-      status: response.status
+      status: response.status,
     };
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred',
-      status: 0 // Network error or other client-side issue
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+      status: 0, // Network error or other client-side issue
     };
   }
 }
@@ -231,39 +241,41 @@ export async function apiRequest<T>(
  * @param currentToken Current token to refresh
  * @returns Promise resolving to API response with new token
  */
-async function refreshToken(currentToken: string): Promise<ApiResponse<UserInfo>> {
+async function refreshToken(
+  currentToken: string
+): Promise<ApiResponse<UserInfo>> {
   try {
     const response = await fetch(`${API_BASE_URL}${ENDPOINTS.REFRESH_TOKEN}`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${currentToken}`
-      }
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${currentToken}`,
+      },
     });
-    
+
     if (!response.ok) {
       return {
         success: false,
         error: `Token refresh failed with status ${response.status}`,
-        status: response.status
+        status: response.status,
       };
     }
-    
+
     const userData = await response.json();
-    
+
     // Update stored user info
     chrome.storage.local.set({ knuggetUserInfo: userData });
-    
+
     return {
       success: true,
       data: userData,
-      status: response.status
+      status: response.status,
     };
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred',
-      status: 0
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+      status: 0,
     };
   }
 }
@@ -274,15 +286,15 @@ async function refreshToken(currentToken: string): Promise<ApiResponse<UserInfo>
  */
 async function refreshAndGetToken(): Promise<string | null> {
   return new Promise((resolve) => {
-    chrome.storage.local.get(['knuggetUserInfo'], async (result) => {
+    chrome.storage.local.get(["knuggetUserInfo"], async (result) => {
       if (!result.knuggetUserInfo) {
         resolve(null);
         return;
       }
-      
+
       const userInfo = result.knuggetUserInfo as UserInfo;
       const response = await refreshToken(userInfo.token);
-      
+
       if (response.success && response.data) {
         resolve(response.data.token);
       } else {
@@ -298,22 +310,28 @@ async function refreshAndGetToken(): Promise<string | null> {
  * @param password User password
  * @returns Promise resolving to API response with user info
  */
-export async function login(email: string, password: string): Promise<ApiResponse<UserInfo>> {
+export async function login(
+  email: string,
+  password: string
+): Promise<ApiResponse<UserInfo>> {
   const response = await apiRequest<UserInfo>(
     ENDPOINTS.LOGIN,
-    'POST',
+    "POST",
     { email, password },
     false
   );
-  
+
   if (response.success && response.data) {
     // Store user info in Chrome storage
     chrome.storage.local.set({ knuggetUserInfo: response.data });
-    
+
     // Notify background script about login
-    chrome.runtime.sendMessage({ type: 'AUTH_STATE_CHANGED', payload: { isLoggedIn: true } });
+    chrome.runtime.sendMessage({
+      type: "AUTH_STATE_CHANGED",
+      payload: { isLoggedIn: true },
+    });
   }
-  
+
   return response;
 }
 
@@ -325,25 +343,28 @@ export async function login(email: string, password: string): Promise<ApiRespons
  * @returns Promise resolving to API response with user info
  */
 export async function register(
-  email: string, 
-  password: string, 
+  email: string,
+  password: string,
   name: string
 ): Promise<ApiResponse<UserInfo>> {
   const response = await apiRequest<UserInfo>(
     ENDPOINTS.REGISTER,
-    'POST',
+    "POST",
     { email, password, name },
     false
   );
-  
+
   if (response.success && response.data) {
     // Store user info in Chrome storage
     chrome.storage.local.set({ knuggetUserInfo: response.data });
-    
+
     // Notify background script about registration/login
-    chrome.runtime.sendMessage({ type: 'AUTH_STATE_CHANGED', payload: { isLoggedIn: true } });
+    chrome.runtime.sendMessage({
+      type: "AUTH_STATE_CHANGED",
+      payload: { isLoggedIn: true },
+    });
   }
-  
+
   return response;
 }
 
@@ -355,17 +376,20 @@ export async function logout(): Promise<boolean> {
   try {
     // Remove user info from Chrome storage
     await new Promise<void>((resolve) => {
-      chrome.storage.local.remove(['knuggetUserInfo'], () => {
+      chrome.storage.local.remove(["knuggetUserInfo"], () => {
         resolve();
       });
     });
-    
+
     // Notify background script about logout
-    chrome.runtime.sendMessage({ type: 'AUTH_STATE_CHANGED', payload: { isLoggedIn: false } });
-    
+    chrome.runtime.sendMessage({
+      type: "AUTH_STATE_CHANGED",
+      payload: { isLoggedIn: false },
+    });
+
     return true;
   } catch (error) {
-    console.error('Error during logout:', error);
+    console.error("Error during logout:", error);
     return false;
   }
 }
@@ -395,19 +419,15 @@ export async function generateSummary(
   }
 ): Promise<ApiResponse<Summary>> {
   // Convert transcript segments to plain text
-  const content = transcript.map(segment => segment.text).join(' ');
-  
-  return apiRequest<Summary>(
-    ENDPOINTS.SUMMARIZE,
-    'POST',
-    { 
-      content, 
-      metadata: {
-        ...metadata,
-        source: 'youtube'
-      }
-    }
-  );
+  const content = transcript.map((segment) => segment.text).join(" ");
+
+  return apiRequest<Summary>(ENDPOINTS.SUMMARIZE, "POST", {
+    content,
+    metadata: {
+      ...metadata,
+      source: "youtube",
+    },
+  });
 }
 
 /**
@@ -415,12 +435,10 @@ export async function generateSummary(
  * @param summary Summary to save
  * @returns Promise resolving to API response with summary ID
  */
-export async function saveSummary(summary: Summary): Promise<ApiResponse<{id: string}>> {
-  return apiRequest<{id: string}>(
-    ENDPOINTS.SAVE_SUMMARY,
-    'POST',
-    summary
-  );
+export async function saveSummary(
+  summary: Summary
+): Promise<ApiResponse<{ id: string }>> {
+  return apiRequest<{ id: string }>(ENDPOINTS.SAVE_SUMMARY, "POST", summary);
 }
 
 /**
@@ -432,18 +450,18 @@ export async function saveSummary(summary: Summary): Promise<ApiResponse<{id: st
 export async function getSavedSummaries(
   page: number = 1,
   limit: number = 10
-): Promise<ApiResponse<{
-  summaries: Summary[];
-  total: number;
-  page: number;
-  limit: number;
-}>> {
+): Promise<
+  ApiResponse<{
+    summaries: Summary[];
+    total: number;
+    page: number;
+    limit: number;
+  }>
+> {
   return apiRequest<{
     summaries: Summary[];
     total: number;
     page: number;
     limit: number;
-  }>(
-    `${ENDPOINTS.SAVED_SUMMARIES}?page=${page}&limit=${limit}`
-  );
+  }>(`${ENDPOINTS.SAVED_SUMMARIES}?page=${page}&limit=${limit}`);
 }

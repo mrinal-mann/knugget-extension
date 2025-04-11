@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const helpBtn = document.getElementById("help-btn");
 
   // Base URL for web app
-  const WEB_APP_URL = "http://localhost:3000";
+  const WEB_APP_URL = "http://localhost:8000";
 
   // Update manifest version
   const versionElement = document.querySelector(".version");
