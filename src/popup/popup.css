@@ -1,119 +1,288 @@
+/**
+ * Knugget AI Popup Styles
+ */
+
+ :root {
+  --primary-color: #00b894;
+  --primary-hover: #00a884;
+  --text-color: #333;
+  --text-light: #777;
+  --border-color: #eaeaea;
+  --bg-light: #f9f9f9;
+  --bg-dark: #0f0f0f;
+  --text-dark: #fff;
+  --text-dark-light: #aaa;
+  --border-dark: #2d2d2d;
+}
+
+/* Base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 body {
-    font-family: 'Roboto', Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f9f9f9;
-    color: #333;
-    width: 320px;
-    height: 400px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-color);
+  background-color: #fff;
+}
+
+.knugget-popup {
+  width: 320px;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+}
+
+.logo svg {
+  margin-right: 8px;
+}
+
+.logo span {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.version {
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+/* Status section */
+.status-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: var(--bg-light);
+  border-bottom: 1px solid var(--border-color);
+}
+
+#status-message {
+  font-size: 13px;
+}
+
+.status-active {
+  color: var(--primary-color);
+}
+
+.status-inactive {
+  color: var(--text-light);
+}
+
+/* User section */
+.user-section {
+  padding: 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+#login-prompt p {
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--text-light);
+}
+
+.hidden {
+  display: none;
+}
+
+.user-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+#user-name {
+  font-weight: 600;
+}
+
+.user-plan-badge {
+  font-size: 11px;
+  padding: 2px 6px;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 12px;
+}
+
+.user-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Button styles */
+button {
+  font-family: inherit;
+  font-size: 13px;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.primary-btn {
+  background-color: var(--primary-color);
+  color: white;
+  font-weight: 500;
+}
+
+.primary-btn:hover {
+  background-color: var(--primary-hover);
+}
+
+.secondary-btn {
+  background-color: transparent;
+  color: var(--primary-color);
+  border: 1px solid var(--primary-color);
+}
+
+.secondary-btn:hover {
+  background-color: rgba(0, 184, 148, 0.05);
+}
+
+.outline-btn {
+  background-color: transparent;
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  font-size: 12px;
+  padding: 6px 10px;
+}
+
+.outline-btn:hover {
+  background-color: var(--bg-light);
+}
+
+/* Quick actions */
+.quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-light);
+  border: 1px solid var(--border-color);
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 500;
+}
+
+.action-btn svg {
+  margin-right: 8px;
+  color: var(--primary-color);
+}
+
+.action-btn:hover {
+  background-color: #f0f0f0;
+}
+
+/* Footer */
+.popup-footer {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  padding: 12px;
+  margin-top: auto;
+}
+
+.text-btn {
+  background-color: transparent;
+  color: var(--text-light);
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+.text-btn:hover {
+  color: var(--primary-color);
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  body {
+    color: var(--text-dark);
+    background-color: var(--bg-dark);
   }
   
-  .container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+  .popup-header,
+  .status-section,
+  .user-section,
+  .quick-actions {
+    border-color: var(--border-dark);
   }
   
-  .header {
-    background: linear-gradient(135deg, #7c4dff, #5e35b1);
-    color: white;
-    padding: 16px;
-    text-align: center;
+  .popup-header {
+    background-color: var(--bg-dark);
   }
   
-  .header h1 {
-    margin: 0;
-    font-size: 24px;
+  .status-section {
+    background-color: #191919;
   }
   
-  .header p {
-    margin: 8px 0 0;
-    font-size: 14px;
-    opacity: 0.8;
+  #status-message,
+  .version,
+  #login-prompt p {
+    color: var(--text-dark-light);
   }
   
-  .content {
-    flex: 1;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+  .outline-btn {
+    color: var(--text-dark);
+    border-color: var(--border-dark);
   }
   
-  .btn {
-    border: none;
-    border-radius: 4px;
-    padding: 10px 16px;
-    font-size: 14px;
-    cursor: pointer;
-    margin-top: 8px;
-    transition: background-color 0.2s;
-    display: block;
-    width: 100%;
+  .outline-btn:hover {
+    background-color: #191919;
   }
   
-  .btn.primary {
-    background-color: #7c4dff;
-    color: white;
+  .action-btn {
+    background-color: #191919;
+    border-color: var(--border-dark);
+    color: var(--text-dark);
   }
   
-  .btn.primary:hover {
-    background-color: #6040b8;
+  .action-btn:hover {
+    background-color: #222;
   }
   
-  .btn.secondary {
-    background-color: #5e35b1;
-    color: white;
+  .text-btn {
+    color: var(--text-dark-light);
   }
-  
-  .btn.danger {
-    background-color: #f44336;
-    color: white;
+}
+
+/* Animation for logo */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
   }
-  
-  .stats {
-    display: flex;
-    justify-content: space-around;
-    margin: 16px 0;
+  50% {
+    transform: scale(1.05);
   }
-  
-  .stat-item {
-    text-align: center;
+  100% {
+    transform: scale(1);
   }
-  
-  .stat-value {
-    display: block;
-    font-size: 24px;
-    font-weight: bold;
-    color: #7c4dff;
-  }
-  
-  .stat-label {
-    font-size: 12px;
-    color: #666;
-  }
-  
-  .footer {
-    padding: 12px;
-    text-align: center;
-    font-size: 12px;
-    color: #666;
-    border-top: 1px solid #eee;
-  }
-  
-  /* Dark mode */
-  @media (prefers-color-scheme: dark) {
-    body {
-      background-color: #1a1a1a;
-      color: #f0f0f0;
-    }
-    
-    .stats .stat-label {
-      color: #aaa;
-    }
-    
-    .footer {
-      color: #aaa;
-      border-top: 1px solid #333;
-    }
-  }
+}
+
+.logo svg path {
+  animation: pulse 2s infinite ease-in-out;
+}
