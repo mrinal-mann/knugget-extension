@@ -3,18 +3,19 @@
  * Handles all API communication with the backend server
  */
 
+// src/utils/api.ts - Config section
 // Base URL for the Knugget API - Update this to point to your backend
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = 'http://localhost:3000/api'; // Changed to include /api path
 
 // API endpoints - Make sure these match your backend routes
 const ENDPOINTS = {
-  LOGIN: '/auth/login', // Adjust based on your auth routes
+  LOGIN: '/auth/login', 
   REGISTER: '/auth/register',
   REFRESH_TOKEN: '/auth/refresh',
-  USER_PROFILE: '/user/me', // This matches your endpoint
+  USER_PROFILE: '/auth/me', // Changed to match your route
   SUMMARIZE: '/summary/generate',
-  SAVED_SUMMARIES: '/summary',
-  SAVE_SUMMARY: '/summary/save'
+  SAVED_SUMMARIES: "/summary",
+  SAVE_SUMMARY: "/summary/save",
 };
 
 /**

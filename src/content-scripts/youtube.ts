@@ -30,19 +30,18 @@ let transcriptData: TranscriptSegment[] | null = null;
 let summaryData: Summary | null = null;
 
 // Base URL for the Knugget API - Update this to point to your backend
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = "http://localhost:3000/api"; // Changed to include /api path
 
 // API endpoints - Make sure these match your backend routes
 const ENDPOINTS = {
-  LOGIN: '/auth/login', // Adjust based on your auth routes
-  REGISTER: '/auth/register',
-  REFRESH_TOKEN: '/auth/refresh',
-  USER_PROFILE: '/user/me', // This matches your endpoint
-  SUMMARIZE: '/summary/generate',
-  SAVED_SUMMARIES: '/summary',
-  SAVE_SUMMARY: '/summary/save'
+  LOGIN: "/auth/login",
+  REGISTER: "/auth/register",
+  REFRESH_TOKEN: "/auth/refresh",
+  USER_PROFILE: "/auth/me", // Changed to match your route
+  SUMMARIZE: "/summary/generate",
+  SAVED_SUMMARIES: "/summary",
+  SAVE_SUMMARY: "/summary/save",
 };
-
 
 // Waits for a DOM element to appear
 const waitForElement = (
@@ -196,7 +195,7 @@ function createTranscriptSegmentHTML(segments: TranscriptSegment[]): string {
     .join("");
 }
 
-// Get authentication token from storage
+//Get authentication token from storage
 async function getAuthToken(): Promise<string | null> {
   return new Promise((resolve) => {
     chrome.storage.local.get(["knuggetUserInfo"], (result) => {
@@ -257,15 +256,27 @@ async function apiRequest<T>(
       body: data ? JSON.stringify(data) : undefined,
     });
 
-    // Parse the JSON response
-    const result = await response.json();
-
+    // Handle network errors
     if (!response.ok) {
+      // Try to get error from response
+      let errorMessage: string;
+      try {
+        const errorResponse = await response.json();
+        errorMessage =
+          errorResponse.error ||
+          `Request failed with status ${response.status}`;
+      } catch (jsonError) {
+        errorMessage = `Request failed with status ${response.status}`;
+      }
+
       return {
         success: false,
-        error: result.error || `Request failed with status ${response.status}`,
+        error: errorMessage,
       };
     }
+
+    // Parse the JSON response
+    const result = await response.json();
 
     return {
       success: true,
@@ -313,6 +324,30 @@ async function generateSummary(
   } catch (error) {
     console.error("Summary generation error:", error);
     return null;
+  }
+}
+
+// Function to save a summary
+async function saveSummary(summary: Summary): Promise<boolean> {
+  try {
+    // Get video metadata
+    const videoUrl = window.location.href;
+    const videoId = new URLSearchParams(window.location.search).get("v") || "";
+
+    // Format data for API
+    const saveData = {
+      videoUrl,
+      videoId,
+      title: summary.title,
+      keyPoints: summary.keyPoints,
+      fullSummary: summary.fullSummary,
+    };
+
+    const response = await apiRequest(ENDPOINTS.SAVE_SUMMARY, "POST", saveData);
+    return response.success;
+  } catch (error) {
+    console.error("Error saving summary:", error);
+    return false;
   }
 }
 
@@ -367,6 +402,7 @@ function showError(
   }
 }
 
+// Function to show login required state for summary tab
 // Function to show login required state for summary tab
 function showLoginRequired(summaryContentElement: HTMLElement): void {
   summaryContentElement.innerHTML = `
@@ -551,7 +587,6 @@ async function loadAndDisplayTranscript(): Promise<void> {
     showError(transcriptContentElement, errorMessage, loadAndDisplayTranscript);
   }
 }
-
 // Function to load and display summary
 async function loadAndDisplaySummary(): Promise<void> {
   console.log("Knugget AI: Loading and displaying summary");
@@ -587,18 +622,33 @@ async function loadAndDisplaySummary(): Promise<void> {
       return;
     }
 
-    // Generate summary from transcript
-    const summary = await generateSummary(transcriptData);
+    // Get video metadata
+    const videoUrl = window.location.href;
+    const videoId = new URLSearchParams(window.location.search).get("v") || "";
+    const videoTitle =
+      document.querySelector("h1.title")?.textContent?.trim() || "";
 
-    if (!summary) {
-      throw new Error("Failed to generate summary");
+    // Format transcript for API
+    const transcriptText = transcriptData
+      .map((segment) => segment.text)
+      .join(" ");
+
+    // Call the summarize API with the format your backend expects
+    const response = await apiRequest<Summary>(ENDPOINTS.SUMMARIZE, "POST", {
+      videoUrl,
+      transcript: transcriptText,
+      title: videoTitle,
+    });
+
+    if (!response.success || !response.data) {
+      throw new Error(response.error || "Failed to generate summary");
     }
 
     // Store summary data
-    summaryData = summary;
+    summaryData = response.data;
 
     // Display the summary
-    displaySummary(summaryContentElement, summary);
+    displaySummary(summaryContentElement, response.data);
 
     console.log("Summary loaded successfully");
   } catch (error) {

@@ -1,3 +1,4 @@
+// src/popup/popup.ts
 /**
  * Knugget AI Popup Script
  * Manages the extension popup UI and interactions
@@ -11,6 +12,7 @@ interface UserInfo {
   token: string;
   expiresAt: number;
   plan: string;
+  credits: number;
 }
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -19,6 +21,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const userInfo = document.getElementById("user-info");
   const userName = document.getElementById("user-name");
   const userPlan = document.getElementById("user-plan");
+  const userCredits = document.getElementById("user-credits");
   const statusMessage = document.getElementById("status-message");
   const statusIcon = document.getElementById("status-icon");
 
@@ -31,6 +34,9 @@ document.addEventListener("DOMContentLoaded", function () {
   const settingsBtn = document.getElementById("settings-btn");
   const feedbackBtn = document.getElementById("feedback-btn");
   const helpBtn = document.getElementById("help-btn");
+
+  // Base URL for web app
+  const WEB_APP_URL = "http://localhost:3000";
 
   // Update manifest version
   const versionElement = document.querySelector(".version");
@@ -46,15 +52,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Add button event listeners
   loginBtn?.addEventListener("click", () => {
-    openUrl("https://app.knugget.ai/login?source=extension");
+    openUrl(`${WEB_APP_URL}/login?source=extension`);
   });
 
   signupBtn?.addEventListener("click", () => {
-    openUrl("https://app.knugget.ai/signup?source=extension");
+    openUrl(`${WEB_APP_URL}/signup?source=extension`);
   });
 
   accountBtn?.addEventListener("click", () => {
-    openUrl("https://app.knugget.ai/account?source=extension");
+    openUrl(`${WEB_APP_URL}/account?source=extension`);
   });
 
   logoutBtn?.addEventListener("click", () => {
@@ -62,19 +68,19 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   savedBtn?.addEventListener("click", () => {
-    openUrl("https://app.knugget.ai/summaries?source=extension");
+    openUrl(`${WEB_APP_URL}/summaries?source=extension`);
   });
 
   settingsBtn?.addEventListener("click", () => {
-    openUrl("https://app.knugget.ai/settings?source=extension");
+    openUrl(`${WEB_APP_URL}/settings?source=extension`);
   });
 
   feedbackBtn?.addEventListener("click", () => {
-    openUrl("https://app.knugget.ai/feedback?source=extension");
+    openUrl(`${WEB_APP_URL}/feedback?source=extension`);
   });
 
   helpBtn?.addEventListener("click", () => {
-    openUrl("https://app.knugget.ai/help?source=extension");
+    openUrl(`${WEB_APP_URL}/help?source=extension`);
   });
 
   /**
@@ -132,8 +138,10 @@ document.addEventListener("DOMContentLoaded", function () {
    * Show login prompt
    */
   function showLoginPrompt() {
-    loginPrompt?.classList.remove("hidden");
-    userInfo?.classList.add("hidden");
+    if (loginPrompt && userInfo) {
+      loginPrompt.classList.remove("hidden");
+      userInfo.classList.add("hidden");
+    }
   }
 
   /**
@@ -154,9 +162,16 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
 
+    // Update user credits if element exists
+    if (userCredits) {
+      userCredits.textContent = `${user.credits || 0} credits`;
+    }
+
     // Show user info section
-    loginPrompt?.classList.add("hidden");
-    userInfo?.classList.remove("hidden");
+    if (loginPrompt && userInfo) {
+      loginPrompt.classList.add("hidden");
+      userInfo.classList.remove("hidden");
+    }
   }
 
   /**

@@ -7,7 +7,8 @@
 // import { UserInfo } from './api';
 
 // Base URL for the Knugget website/app
-const WEBSITE_BASE_URL = "https://app.knugget.ai";
+const WEBSITE_BASE_URL = "http://localhost:3000";
+
 
 // Record of open tabs that have the Knugget extension active
 const activeTabsMap: Record<number, boolean> = {};
