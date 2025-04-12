@@ -96,7 +96,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case "OPEN_LOGIN_PAGE":
       // Open login page in a new tab
       chrome.tabs.create({
-        url: `${WEBSITE_BASE_URL}/auth/login?source=extension`,
+        url: `${WEBSITE_BASE_URL}/auth/login?source=extension`, // This path should match your Next.js route
       });
       break;
 
@@ -105,7 +105,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       chrome.tabs.create({
         url: `${WEBSITE_BASE_URL}/auth/register?source=extension&referrer=${encodeURIComponent(
           message.payload?.url || ""
-        )}`,
+        )}`, // This path should match your Next.js route
       });
       break;
 
@@ -244,3 +244,57 @@ chrome.runtime.onStartup.addListener(() => {
     }
   });
 });
+
+// Listen for messages from web pages
+chrome.runtime.onMessageExternal.addListener(
+  (message, sender, sendResponse) => {
+    if (message.type === "KNUGGET_AUTH_SUCCESS") {
+      // Store user info from the frontend
+      console.log("Received auth success message:", message.payload);
+
+      if (message.payload && message.payload.token) {
+        // Add expiration time if not present
+        if (!message.payload.expiresAt) {
+          message.payload.expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+        }
+
+        // Store in chrome.storage
+        chrome.storage.local.set(
+          {
+            knuggetUserInfo: message.payload,
+          },
+          () => {
+            // Broadcast auth change to all tabs
+            broadcastAuthStateChange(true);
+
+            // Send success response
+            sendResponse({ success: true });
+          }
+        );
+      } else {
+        console.error("Invalid auth payload received");
+        sendResponse({ success: false, error: "Invalid auth data" });
+      }
+
+      return true; // Keep the message channel open for async response
+    }
+  }
+);
+
+// Broadcast auth state change to all active tabs
+function broadcastAuthStateChange(isLoggedIn: any) {
+  Object.keys(activeTabsMap).forEach((id) => {
+    const numId = parseInt(id, 10);
+    if (activeTabsMap[numId]) {
+      chrome.tabs
+        .sendMessage(numId, {
+          type: "AUTH_STATE_CHANGED",
+          payload: { isLoggedIn },
+        })
+        .catch(() => {
+          // Tab might be closed or not available anymore
+          delete activeTabsMap[numId];
+        });
+    }
+  });
+}

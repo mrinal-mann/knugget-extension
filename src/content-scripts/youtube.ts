@@ -34,10 +34,10 @@ const API_BASE_URL = "http://localhost:3000/api"; // Updated to production URL
 
 // API endpoints - Make sure these match your backend routes
 const ENDPOINTS = {
-  LOGIN: "/auth/login",
-  REGISTER: "/auth/register",
+  LOGIN: "/auth/signin", // Changed from /auth/login
+  REGISTER: "/auth/signup", // Changed from /auth/register
   REFRESH_TOKEN: "/auth/refresh",
-  USER_PROFILE: "/auth/me", // Changed to match your route
+  USER_PROFILE: "/auth/me",
   SUMMARIZE: "/summary/generate",
   SAVED_SUMMARIES: "/summary",
   SAVE_SUMMARY: "/summary/save",
@@ -199,11 +199,11 @@ function createTranscriptSegmentHTML(segments: TranscriptSegment[]): string {
 async function getAuthToken(): Promise<string | null> {
   return new Promise((resolve) => {
     chrome.storage.local.get(["knuggetUserInfo"], (result) => {
-      if (result.knuggetUserInfo) {
+      if (result.knuggetUserInfo && result.knuggetUserInfo.token) {
         const userInfo = result.knuggetUserInfo;
 
         // Check if token is expired
-        if (userInfo.expiresAt < Date.now()) {
+        if (userInfo.expiresAt && userInfo.expiresAt < Date.now()) {
           resolve(null);
         } else {
           resolve(userInfo.token);
@@ -737,6 +737,8 @@ async function loadAndDisplaySummary(): Promise<void> {
 
   // First, check if user is logged in
   const isLoggedIn = await isUserLoggedIn();
+  console.log("User logged in status:", isLoggedIn);
+
   if (!isLoggedIn) {
     showLoginRequired(summaryContentElement);
     return;
@@ -1300,3 +1302,27 @@ chrome.runtime.onMessage.addListener((message) => {
     }
   }
 });
+
+
+function debugAuthStorage() {
+  chrome.storage.local.get(["knuggetUserInfo"], (result) => {
+    console.log("Current knuggetUserInfo in storage:", result.knuggetUserInfo);
+    
+    if (result.knuggetUserInfo) {
+      // Check token expiration
+      const expiresAt = result.knuggetUserInfo.expiresAt;
+      const now = Date.now();
+      console.log("Token expires at:", new Date(expiresAt).toLocaleString());
+      console.log("Current time:", new Date(now).toLocaleString());
+      console.log("Token expired:", expiresAt < now);
+      
+      // Check token validity
+      const token = result.knuggetUserInfo.token;
+      console.log("Token exists:", !!token);
+    } else {
+      console.log("No user info found in storage");
+    }
+  });
+}
+
+debugAuthStorage();

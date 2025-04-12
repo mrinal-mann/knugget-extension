@@ -9,10 +9,10 @@ const API_BASE_URL = "http://localhost:3000/api"; // Update this with your actua
 
 // API endpoints - Make sure these match your backend routes
 const ENDPOINTS = {
-  LOGIN: "/auth/login",
-  REGISTER: "/auth/register",
+  LOGIN: "/auth/signin", // Changed from /auth/login
+  REGISTER: "/auth/signup", // Changed from /auth/register
   REFRESH_TOKEN: "/auth/refresh",
-  USER_PROFILE: "/auth/me", // Changed to match your route
+  USER_PROFILE: "/auth/me",
   SUMMARIZE: "/summary/generate",
   SAVED_SUMMARIES: "/summary",
   SAVE_SUMMARY: "/summary/save",
@@ -263,6 +263,11 @@ async function refreshToken(
 
     const userData = await response.json();
 
+    // Add expiresAt if it doesn't exist in the response
+    if (!userData.expiresAt) {
+      userData.expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+    }
+
     // Update stored user info
     chrome.storage.local.set({ knuggetUserInfo: userData });
 
@@ -322,6 +327,11 @@ export async function login(
   );
 
   if (response.success && response.data) {
+    // Add expiresAt if it doesn't exist in the response
+    if (!response.data.expiresAt) {
+      response.data.expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+    }
+
     // Store user info in Chrome storage
     chrome.storage.local.set({ knuggetUserInfo: response.data });
 
@@ -355,6 +365,11 @@ export async function register(
   );
 
   if (response.success && response.data) {
+    // Add expiresAt if it doesn't exist in the response
+    if (!response.data.expiresAt) {
+      response.data.expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+    }
+
     // Store user info in Chrome storage
     chrome.storage.local.set({ knuggetUserInfo: response.data });
 
