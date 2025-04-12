@@ -4,7 +4,6 @@
  */
 
 // Import types from API file if needed
-// import { UserInfo } from './api';
 
 // Base URL for the Knugget website/app
 const WEBSITE_BASE_URL = "http://localhost:8000";
@@ -94,18 +93,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       break;
 
     case "OPEN_LOGIN_PAGE":
-      // Open login page in a new tab
+      // Open login page in a new tab (include extension ID)
       chrome.tabs.create({
-        url: `${WEBSITE_BASE_URL}/auth/login?source=extension`, // This path should match your Next.js route
+        url: `${WEBSITE_BASE_URL}/auth/login?source=extension&extensionId=${chrome.runtime.id}`,
       });
       break;
 
     case "OPEN_SIGNUP_PAGE":
-      // Open signup page in a new tab
+      // Open signup page in a new tab (include extension ID)
       chrome.tabs.create({
-        url: `${WEBSITE_BASE_URL}/auth/register?source=extension&referrer=${encodeURIComponent(
-          message.payload?.url || ""
-        )}`, // This path should match your Next.js route
+        url: `${WEBSITE_BASE_URL}/auth/register?source=extension&extensionId=${
+          chrome.runtime.id
+        }&referrer=${encodeURIComponent(message.payload?.url || "")}`,
       });
       break;
 
@@ -248,27 +247,32 @@ chrome.runtime.onStartup.addListener(() => {
 // Listen for messages from web pages
 chrome.runtime.onMessageExternal.addListener(
   (message, sender, sendResponse) => {
+    console.log("External message received:", message, "from:", sender.url);
+
     if (message.type === "KNUGGET_AUTH_SUCCESS") {
       // Store user info from the frontend
       console.log("Received auth success message:", message.payload);
 
       if (message.payload && message.payload.token) {
-        // Add expiration time if not present
-        if (!message.payload.expiresAt) {
-          message.payload.expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
-        }
-
-        // Store in chrome.storage
+        // Store Supabase token and user info
         chrome.storage.local.set(
           {
             knuggetUserInfo: message.payload,
           },
           () => {
-            // Broadcast auth change to all tabs
-            broadcastAuthStateChange(true);
+            // Check if data was stored properly
+            chrome.storage.local.get(["knuggetUserInfo"], (result) => {
+              console.log(
+                "Auth data stored:",
+                result.knuggetUserInfo ? "Success" : "Failed"
+              );
 
-            // Send success response
-            sendResponse({ success: true });
+              // Broadcast auth change to all tabs
+              broadcastAuthStateChange(true);
+
+              // Send success response
+              sendResponse({ success: true });
+            });
           }
         );
       } else {
@@ -278,6 +282,10 @@ chrome.runtime.onMessageExternal.addListener(
 
       return true; // Keep the message channel open for async response
     }
+
+    // For debugging - log any other message types received
+    console.log("Unhandled external message type:", message.type);
+    return true;
   }
 );
 

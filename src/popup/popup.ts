@@ -35,6 +35,24 @@ document.addEventListener("DOMContentLoaded", function () {
   const feedbackBtn = document.getElementById("feedback-btn");
   const helpBtn = document.getElementById("help-btn");
 
+  // Add debug button to the footer
+  const footerElement = document.querySelector("footer");
+  if (footerElement) {
+    const debugButton = document.createElement("button");
+    debugButton.className = "debug-btn";
+    debugButton.textContent = "Debug Auth";
+    debugButton.style.fontSize = "10px";
+    debugButton.style.padding = "2px 5px";
+    debugButton.style.marginLeft = "10px";
+    debugButton.style.backgroundColor = "#333";
+    debugButton.style.color = "#eee";
+    debugButton.style.border = "none";
+    debugButton.style.borderRadius = "3px";
+    footerElement.appendChild(debugButton);
+
+    debugButton.addEventListener("click", debugAuthStorage);
+  }
+
   // Base URL for web app
   const WEB_APP_URL = "http://localhost:8000";
 
@@ -52,11 +70,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Add button event listeners
   loginBtn?.addEventListener("click", () => {
-    openUrl(`${WEB_APP_URL}/login?source=extension`);
+    chrome.runtime.sendMessage({ type: "OPEN_LOGIN_PAGE" });
   });
 
   signupBtn?.addEventListener("click", () => {
-    openUrl(`${WEB_APP_URL}/signup?source=extension`);
+    chrome.runtime.sendMessage({ type: "OPEN_SIGNUP_PAGE" });
   });
 
   accountBtn?.addEventListener("click", () => {
@@ -195,6 +213,82 @@ document.addEventListener("DOMContentLoaded", function () {
 
       // Update UI
       showLoginPrompt();
+    });
+  }
+
+  /**
+   * Debug function to check storage content
+   */
+  function debugAuthStorage() {
+    chrome.storage.local.get(null, (result) => {
+      console.log("All storage data:", result);
+
+      // Create a modal to display the data
+      const modal = document.createElement("div");
+      modal.style.position = "fixed";
+      modal.style.top = "0";
+      modal.style.left = "0";
+      modal.style.width = "100%";
+      modal.style.height = "100%";
+      modal.style.backgroundColor = "rgba(0,0,0,0.8)";
+      modal.style.zIndex = "1000";
+      modal.style.padding = "20px";
+      modal.style.boxSizing = "border-box";
+      modal.style.overflowY = "auto";
+      modal.style.color = "white";
+      modal.style.fontFamily = "monospace";
+
+      // Add close button
+      const closeBtn = document.createElement("button");
+      closeBtn.textContent = "Close";
+      closeBtn.style.position = "absolute";
+      closeBtn.style.top = "10px";
+      closeBtn.style.right = "10px";
+      closeBtn.style.padding = "5px 10px";
+      closeBtn.style.backgroundColor = "#333";
+      closeBtn.style.border = "none";
+      closeBtn.style.borderRadius = "3px";
+      closeBtn.style.color = "white";
+      closeBtn.addEventListener("click", () => {
+        document.body.removeChild(modal);
+      });
+      modal.appendChild(closeBtn);
+
+      // Add content
+      const content = document.createElement("pre");
+      content.textContent = JSON.stringify(result, null, 2);
+      content.style.marginTop = "30px";
+      modal.appendChild(content);
+
+      // Add to body
+      document.body.appendChild(modal);
+
+      // If we have user info, check token validity
+      if (result.knuggetUserInfo) {
+        const userInfo = result.knuggetUserInfo;
+        const now = Date.now();
+        const expiry = new Date(userInfo.expiresAt);
+        const isValid = userInfo.expiresAt > now;
+
+        const tokenInfo = document.createElement("div");
+        tokenInfo.style.marginTop = "15px";
+        tokenInfo.style.padding = "10px";
+        tokenInfo.style.backgroundColor = isValid
+          ? "rgba(0,128,0,0.3)"
+          : "rgba(255,0,0,0.3)";
+        tokenInfo.style.borderRadius = "5px";
+        tokenInfo.innerHTML = `
+          <strong>Token Status:</strong> ${isValid ? "Valid" : "Expired"}<br>
+          <strong>Current Time:</strong> ${new Date().toLocaleString()}<br>
+          <strong>Expires At:</strong> ${expiry.toLocaleString()}<br>
+          <strong>Time Left:</strong> ${
+            isValid
+              ? Math.floor((userInfo.expiresAt - now) / 1000 / 60) + " minutes"
+              : "Expired"
+          }
+        `;
+        modal.insertBefore(tokenInfo, content);
+      }
     });
   }
 });

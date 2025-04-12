@@ -7,7 +7,7 @@ module.exports = {
   devtool: "source-map",
   entry: {
     background: "./src/background/background.ts",
-    youtube: "./src/content-scripts/youtube.ts",
+    youtube: "./src/content-scripts/youtube/index.ts",
     popup: "./src/popup/popup.ts",
   },
   output: {
@@ -38,7 +38,7 @@ module.exports = {
       patterns: [
         { from: "manifest.json", to: "." },
         { from: "src/popup/popup.html", to: "popup.html" },
-        { from: "src/content-scripts/style.css", to: "style.css" },
+        { from: "src/content-scripts/youtube/style.css", to: "style.css" },
       ],
     }),
   ],
