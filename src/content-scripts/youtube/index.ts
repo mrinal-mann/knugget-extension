@@ -1,14 +1,38 @@
 // Main entry point for the extension
-import './main';
+import "./main";
 
-// Export everything for the extension to access
-export * from './types';
-export * from './utils';
-export * from './auth';
-export * from './api';
-export * from './transcript';
-export * from './ui';
-export * from './contentHandler';
-export * from './domHandler';
-export * from './domObserver';
-export * from './main'; 
+// Export types from types.ts
+export * from "./types";
+
+// Export utility functions
+export * from "./utils";
+
+// Export auth functions - don't export the ones from api.ts
+export * from "./auth";
+
+// Export API functions - explicitly export only what's not in auth.ts
+export {
+  apiRequest,
+  generateSummary,
+  saveSummary,
+  deleteSummary,
+  getSavedSummaries,
+  getSummaryById,
+  getUserFriendlyError,
+} from "./api";
+
+// Export UI components
+export * from "./ui";
+
+// Export transcript functionality
+export * from "./transcript";
+
+// Export content handlers
+export * from "./contentHandler";
+
+// Export DOM-related functionality
+export * from "./domHandler";
+export * from "./domObserver";
+
+// Export main functionality
+export * from "./main";

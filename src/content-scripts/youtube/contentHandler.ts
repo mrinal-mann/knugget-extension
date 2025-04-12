@@ -1,8 +1,13 @@
-import { Summary, TranscriptSegment } from './types';
-import { extractTranscript, createTranscriptSegmentHTML } from './transcript';
-import { showLoading, showError, showLoginRequired, displaySummary } from './ui';
-import { isUserLoggedIn } from './auth';
-import { generateSummary } from './api';
+import { Summary, TranscriptSegment } from "./types";
+import { extractTranscript, createTranscriptSegmentHTML } from "./transcript";
+import {
+  showLoading,
+  showError,
+  showLoginRequired,
+  displaySummary,
+} from "./ui";
+import { isUserLoggedIn } from "./auth";
+import { generateSummary } from "./api";
 
 // Global variables for tracking data
 let transcriptData: TranscriptSegment[] | null = null;
@@ -104,11 +109,13 @@ export async function loadAndDisplaySummary(): Promise<void> {
     const videoUrl = window.location.href;
     const videoId = new URLSearchParams(window.location.search).get("v") || "";
     const videoTitle =
-      document.querySelector("h1.title")?.textContent?.trim() || "";
+      document.querySelector("h1.title")?.textContent?.trim() ||
+      document.querySelector("h1.ytd-watch-metadata")?.textContent?.trim() ||
+      "YouTube Video";
 
     // Get channel name if available
     const channelElement = document.querySelector(
-      "#top-row .ytd-channel-name a"
+      "#top-row .ytd-channel-name a, #channel-name a"
     );
     const channelName = channelElement?.textContent?.trim() || "";
 
@@ -116,18 +123,29 @@ export async function loadAndDisplaySummary(): Promise<void> {
     const durationElement = document.querySelector(".ytp-time-duration");
     const duration = durationElement?.textContent || "";
 
-    // Generate the summary
-    const summary = await generateSummary(transcriptData);
+    // Convert transcript segments to plain text for the API
+    const transcriptText = transcriptData
+      .map((segment) => segment.text)
+      .join(" ");
 
-    if (!summary) {
-      throw new Error("Failed to generate summary");
+    // Call the API with proper metadata
+    const summaryResponse = await generateSummary(transcriptData, {
+      videoId,
+      title: videoTitle,
+      url: videoUrl,
+      duration: parseInt(duration),
+      channelName,
+    });
+
+    if (!summaryResponse.success || !summaryResponse.data) {
+      throw new Error(summaryResponse.error || "Failed to generate summary");
     }
 
     // Store summary data
-    summaryData = summary;
+    summaryData = summaryResponse.data;
 
     // Display the summary
-    displaySummary(summaryContentElement, summary);
+    displaySummary(summaryContentElement, summaryData);
 
     console.log("Summary loaded successfully");
   } catch (error) {

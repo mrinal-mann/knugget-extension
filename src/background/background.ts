@@ -102,7 +102,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case "OPEN_SIGNUP_PAGE":
       // Open signup page in a new tab (include extension ID)
       chrome.tabs.create({
-        url: `${WEBSITE_BASE_URL}/auth/register?source=extension&extensionId=${
+        url: `${WEBSITE_BASE_URL}/auth/signup?source=extension&extensionId=${
           chrome.runtime.id
         }&referrer=${encodeURIComponent(message.payload?.url || "")}`,
       });
